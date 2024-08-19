@@ -18,10 +18,48 @@ conda create -n medicalChatBot python=3.8 -y
 ```
 
 ```bash
-conda activate mchatbot
+conda activate medicalChatBot
 ```
 
 ### STEP 02- install the requirements
 ```bash
 pip install -r requirements.txt
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Used model
+llama-2-7b-chat.ggmlv3.q4_0.bin
+
+## From the following link:
+https://huggingface.co/TheBloke/Llama-2-7B-Chat-GGML/tree/main
