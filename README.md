@@ -30,35 +30,7 @@ pip install -r requirements.txt
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Used model
+### Download used model
 llama-2-7b-chat.ggmlv3.q4_0.bin
 
 ## From the following link:
