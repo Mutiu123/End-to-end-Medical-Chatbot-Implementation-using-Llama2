@@ -2,6 +2,13 @@
 
 Implementation of End to End Medical Chatbot using Llama2
 
+### Prerequisites
+- Python 3.8 or higher
+- Flask
+- Hugging Face Transformers
+- Pinecone
+- Llama 2 model files
+
 # How to run?
 ### STEPS:
 
@@ -24,6 +31,14 @@ conda activate medicalChatBot
 ### STEP 02- install the requirements
 ```bash
 pip install -r requirements.txt
+```
+
+
+### Create a `.env` file in the root directory and add your Pinecone credentials as follows:
+
+```ini
+PINECONE_API_KEY = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+PINECONE_API_ENV = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
 
