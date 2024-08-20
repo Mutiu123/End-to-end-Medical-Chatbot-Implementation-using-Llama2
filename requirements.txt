@@ -11,4 +11,4 @@ python-dotenv==1.0.1
 langchain_community==0.2.10
 langchain_pinecone==0.1.3
 chainlit
-#-e .
+-e .
