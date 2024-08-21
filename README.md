@@ -1,16 +1,13 @@
 # End-to-end-Medical-Chatbot-Implementation-using-Llama2
 
-Implementation of End to End Medical Chatbot using Llama2
-
 ### Prerequisites
 - Python 3.8 or higher
 - Flask
 - Hugging Face Transformers
 - Pinecone
 - Llama 2 model files
-- Docker
 - Kubernetes
--AWS 
+- AWS 
 
 # How to run?
 ### STEPS:
