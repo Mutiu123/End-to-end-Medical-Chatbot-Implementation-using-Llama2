@@ -163,6 +163,15 @@ medical-chatbot/
 |-- PRODUCTION_READY.md         # Production checklist
 ```
 
+## Screenshots
+
+![Screenshot demo1](https://github.com/Mutiu123/End-to-end-Medical-Chatbot-Implementation-using-Llama2/blob/main/demo/demo1.png)
+
+![Screenshot demo2](https://github.com/Mutiu123/End-to-end-Medical-Chatbot-Implementation-using-Llama2/blob/main/demo/demo2.png)
+
+![Screenshot demo3](https://github.com/Mutiu123/End-to-end-Medical-Chatbot-Implementation-using-Llama2/blob/main/demo/demo3.png)
+
+
 ## Prerequisites
 
 - Python 3.11 or higher
@@ -558,14 +567,6 @@ These documents explain:
 - Why FastAPI over Flask for async support
 - The reasoning behind MongoDB connection pooling settings
 - Trade-offs made for production readiness
-
-## Screenshots
-
-![Screenshot demo1](https://github.com/Mutiu123/End-to-end-Medical-Chatbot-Implementation-using-Llama2/blob/main/demo/demo1.png)
-
-![Screenshot demo2](https://github.com/Mutiu123/End-to-end-Medical-Chatbot-Implementation-using-Llama2/blob/main/demo/demo2.png)
-
-![Screenshot demo3](https://github.com/Mutiu123/End-to-end-Medical-Chatbot-Implementation-using-Llama2/blob/main/demo/demo3.png)
 
 ## License
 
