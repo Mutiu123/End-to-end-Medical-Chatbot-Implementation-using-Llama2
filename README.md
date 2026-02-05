@@ -163,7 +163,7 @@ medical-chatbot/
 |-- PRODUCTION_READY.md         # Production checklist
 ```
 
-## Screenshots
+## Demo
 
 ![Screenshot demo1](https://github.com/Mutiu123/End-to-end-Medical-Chatbot-Implementation-using-Llama2/blob/main/demo/demo1.png)
 
