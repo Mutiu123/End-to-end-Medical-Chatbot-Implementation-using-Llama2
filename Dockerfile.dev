@@ -1,0 +1,59 @@
+# =============================================================================
+# Development Dockerfile for Medical Chatbot API
+# Includes hot-reload and development tools
+# =============================================================================
+
+FROM python:3.11-slim
+
+# Labels
+LABEL maintainer="Medical Chatbot Team" \
+      version="1.0.0-dev" \
+      description="Development Medical Chatbot API"
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    PIP_NO_CACHE_DIR=1 \
+    APP_HOME=/app \
+    ENVIRONMENT=development \
+    DEBUG=true
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libffi-dev \
+    curl \
+    git \
+    vim \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Set working directory
+WORKDIR ${APP_HOME}
+
+# Copy requirements first for better caching
+COPY requirements.txt requirements-dev.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p ${APP_HOME}/logs ${APP_HOME}/model
+
+# Expose application port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/api/v1/live || exit 1
+
+# Development command with hot-reload
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--reload", "--reload-dir", "app"]

@@ -1,0 +1,144 @@
+# =============================================================================
+# Docker Compose Configuration for Medical Chatbot Stack
+# Includes: App, MongoDB, Prometheus, Grafana
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Medical Chatbot API Application
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: medical-chatbot-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DATABASE=medical_chatbot
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENVIRONMENT=${PINECONE_ENVIRONMENT}
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=json
+      - METRICS_ENABLED=true
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+    volumes:
+      - ./app:/app/app:ro
+      - ./src:/app/src:ro
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+      - ./model:/app/model:ro
+      - ./logs:/app/logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - chatbot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # MongoDB Database
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: medical-chatbot-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-adminpassword}
+      - MONGO_INITDB_DATABASE=medical_chatbot
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - chatbot-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # Prometheus Metrics Collection
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: medical-chatbot-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    networks:
+      - chatbot-network
+    depends_on:
+      - app
+
+  # ---------------------------------------------------------------------------
+  # Grafana Dashboard
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: medical-chatbot-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - chatbot-network
+    depends_on:
+      - prometheus
+
+# -----------------------------------------------------------------------------
+# Networks
+# -----------------------------------------------------------------------------
+networks:
+  chatbot-network:
+    driver: bridge
+    name: medical-chatbot-network
+
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
+volumes:
+  mongodb_data:
+    name: medical-chatbot-mongodb-data
+  mongodb_config:
+    name: medical-chatbot-mongodb-config
+  prometheus_data:
+    name: medical-chatbot-prometheus-data
+  grafana_data:
+    name: medical-chatbot-grafana-data

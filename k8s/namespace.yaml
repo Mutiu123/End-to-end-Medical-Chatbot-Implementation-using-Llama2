@@ -1,0 +1,10 @@
+# =============================================================================
+# Kubernetes Namespace for Medical Chatbot
+# =============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: medical-chatbot
+  labels:
+    app: medical-chatbot
+    environment: production

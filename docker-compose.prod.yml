@@ -1,0 +1,130 @@
+# =============================================================================
+# Docker Compose Configuration for Production
+# Optimized for production deployment
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Medical Chatbot API Application (Production)
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: medical-chatbot-api-prod
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DATABASE=medical_chatbot
+      - SECRET_KEY=${SECRET_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_ENVIRONMENT=${PINECONE_ENVIRONMENT}
+      - LOG_LEVEL=WARNING
+      - LOG_FORMAT=json
+      - METRICS_ENABLED=true
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - WORKERS=4
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 4G
+        reservations:
+          cpus: "1.0"
+          memory: 2G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - chatbot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # ---------------------------------------------------------------------------
+  # MongoDB Database (Production)
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: medical-chatbot-mongodb-prod
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
+      - MONGO_INITDB_DATABASE=medical_chatbot
+    volumes:
+      - mongodb_data_prod:/data/db
+      - mongodb_config_prod:/data/configdb
+    networks:
+      - chatbot-network
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # ---------------------------------------------------------------------------
+  # Prometheus (Production)
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: medical-chatbot-prometheus-prod
+    restart: always
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_prod:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    networks:
+      - chatbot-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
+
+networks:
+  chatbot-network:
+    driver: bridge
+    name: medical-chatbot-network-prod
+
+volumes:
+  mongodb_data_prod:
+    name: medical-chatbot-mongodb-data-prod
+  mongodb_config_prod:
+    name: medical-chatbot-mongodb-config-prod
+  prometheus_data_prod:
+    name: medical-chatbot-prometheus-data-prod

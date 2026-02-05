@@ -1,0 +1,37 @@
+# =============================================================================
+# Development Requirements for Medical Chatbot API
+# =============================================================================
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-xdist==3.5.0
+httpx==0.26.0
+faker==22.2.0
+
+# Code Quality
+black==23.12.1
+isort==5.13.2
+flake8==7.0.0
+flake8-docstrings==1.7.0
+flake8-bugbear==24.1.17
+mypy==1.8.0
+pylint==3.0.3
+
+# Type Stubs
+types-python-jose==3.3.4.8
+types-passlib==1.7.7.13
+motor-stubs==1.7.1
+
+# Pre-commit
+pre-commit==3.6.0
+
+# Documentation
+mkdocs==1.5.3
+mkdocs-material==9.5.3
+
+# Development Tools
+ipython==8.19.0
+watchfiles==0.21.0

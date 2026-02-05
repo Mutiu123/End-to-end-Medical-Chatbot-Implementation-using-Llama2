@@ -1,0 +1,69 @@
+# =============================================================================
+# Prometheus Alert Rules for Medical Chatbot
+# =============================================================================
+
+groups:
+  - name: medical-chatbot-alerts
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(medical_chatbot_requests_total{status_code=~"5.."}[5m])) /
+          sum(rate(medical_chatbot_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for the last 5 minutes"
+
+      # High latency alert
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(medical_chatbot_request_latency_seconds_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected"
+          description: "95th percentile latency is above 2 seconds"
+
+      # Database connection issues
+      - alert: DatabaseConnectionFailed
+        expr: medical_chatbot_health_check_status{component="database"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection failed"
+          description: "Database health check is failing"
+
+      # High rate limit hits
+      - alert: HighRateLimitHits
+        expr: sum(rate(medical_chatbot_rate_limit_hits_total[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate limit hits"
+          description: "Many requests are being rate limited"
+
+      # LLM inference errors
+      - alert: LLMInferenceErrors
+        expr: sum(rate(medical_chatbot_llm_errors_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM inference errors detected"
+          description: "LLM is experiencing errors"
+
+      # Service down
+      - alert: ServiceDown
+        expr: up{job="medical-chatbot-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Medical Chatbot API is down"
+          description: "The service is not responding"

@@ -1,0 +1,135 @@
+# =============================================================================
+# Kubernetes Deployment for Medical Chatbot API
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: medical-chatbot-api
+  namespace: medical-chatbot
+  labels:
+    app: medical-chatbot
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: medical-chatbot
+      component: api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: medical-chatbot
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/api/v1/metrics"
+    spec:
+      # Security context - run as non-root
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      # Service account
+      serviceAccountName: medical-chatbot-sa
+
+      # Pod anti-affinity for high availability
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - medical-chatbot
+                topologyKey: kubernetes.io/hostname
+
+      containers:
+        - name: medical-chatbot-api
+          image: medical-chatbot:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          # Environment variables from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: medical-chatbot-config
+            - secretRef:
+                name: medical-chatbot-secrets
+
+          # Resource limits and requests
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+
+          # Liveness probe
+          livenessProbe:
+            httpGet:
+              path: /api/v1/live
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          # Readiness probe
+          readinessProbe:
+            httpGet:
+              path: /api/v1/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          # Startup probe for slow-starting containers
+          startupProbe:
+            httpGet:
+              path: /api/v1/live
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+
+          # Security context for container
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          # Volume mounts
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+
+      # Volumes
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+
+      # Graceful shutdown
+      terminationGracePeriodSeconds: 30
